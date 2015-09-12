@@ -1,0 +1,51 @@
+\documentclass{article}
+
+\begin{document}
+
+\title{Problem Set 1}
+\author{Dylan Pederson}
+
+\maketitle
+
+\section{Problem 1}
+
+Prove the triangle inequality
+$$|A+B| \leq |A| + |B| $$
+
+An equivalent problem is
+$$ |A+B|^2 \leq (|A|+|B|)^2 $$
+or $$ |A+B|^2 \leq |A|^2+|B|^2+2|A||B| $$
+
+$$ \underline{Proof}:  $$
+From the LHS:
+$$ |A+B|^2 = |A|^2 + |B|^2 + <A,B> + <B,A> = |A|^2 + |B|^2 + 2<A,B> $$
+And using Cauchy's inequality ($<A,B> \leq |A||B|$)
+So, $$ |A+B|^2 \leq |A|^2+|B|^2+2|A||B| $$
+
+Generalizing the triangle inequality
+$$ |A_1 + A_2 + ... + A_n| \leq |A_1| + |A_2| + ... |A_n| $$
+If we call
+$$ B = A_1 + A_2 + ... A_{n-1} $$
+then the generalized inequality becomes the normal inequality
+$$|B+A_n| \leq |B| + |A_n| $$
+and we can bound $|B|$ on the RHS by unrolling the sum one term at a time
+
+\section{Problem 2}
+Prove that if $\lim_{x \rightarrow a}f(x) = A$ and $\lim_{x \rightarrow a} g(x) = B$ then $\lim_{x \rightarrow a} f(x)g(x) = AB$
+
+$$\underline{Proof}: $$
+$$ [f(x)-A][g(x)-B] = f(x)g(x)-Bf(x)-Ag(x)+AB $$
+$$ f(x)g(x) = [f(x)-A][g(x)-B] + Bf(x) + Ag(x) - AB $$
+$$ \lim_{x \rightarrow a}f(x)g(x) = \lim_{x \rightarrow a}([f(x)-A][g(x)-B] + Bf(x) + Ag(x) - AB) $$
+$$ \lim_{x \rightarrow a}f(x)g(x) = \lim_{x \rightarrow a} ([f(x)-A][g(x)-B]) + AB $$
+
+We now pay attention to the remaining limit \\
+By definition of a limit
+$$ |f(x)-A| < \epsilon $$ if $ 0 < |x-a| < \delta_1$
+$$ |g(x)-B| < \epsilon $$ if $ 0 < |x-a| < \delta_2$
+Now if we choose $ \delta = min{\delta_1, \delta_2}$
+then if $ 0 < |x-a| < \delta$
+$$ |(f(x)-A)(g(x)-B)-0| \leq |f(x)-A||g(x)-B| \leq \sqrt{\epsilon}\sqrt{\epsilon} $$
+
+
+\end{document}
