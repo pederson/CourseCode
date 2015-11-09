@@ -6,7 +6,7 @@ program ase_382r_hw1
 	integer,parameter :: N = 1000000
 	integer,parameter :: seed = 89758
 	real,parameter :: S_limit = 0.0001
-	integer,parameter :: Estart = 5;
+	integer,parameter :: Estart = 5; ! 20
 	integer :: nparts = N/10;
 	integer :: i, ncoll
 	integer :: rval, p1, p2, hold
@@ -31,7 +31,14 @@ program ase_382r_hw1
 	call srand(seed)
 
 	! initialize the particle energies 
-	forall (i=1:N) En(i) = Estart;
+ 	forall (i=1:N) En(i) = Estart; ! single initial energy
+	
+ 	! spread of initial energy
+! 	forall(i=1:N/5) En(i) = Estart-2;
+! 	forall(i=N/5:2*N/5) En(i) = Estart-1;
+! 	forall(i=2*N/5:3*N/5) En(i) = Estart;
+! 	forall(i=3*N/5:4*N/5) En(i) = Estart+1;
+! 	forall(i=4*N/5:N) En(i) = Estart+2;
 
 	! initialize the entropy and delta
 	S = 0.1
