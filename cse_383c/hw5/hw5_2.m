@@ -1,24 +1,45 @@
 function [] = hw5_2()
 
-o = matrixfree;
+o = matrixfree
 m = o.m;
 n = o.n;
-targetrank = 10;
+fullrank = min([m,n]);
 
-% form orthonormal basis
-Z = rangeA(@(x)o.A(x), @(x)o.At(x), m, n, targetrank);
+disp(['[m,n] = ',num2str(m), ',', num2str(n)])
 
-% form B = Z'A
-B = zeros(targetrank, n);
-for i=1:targetrank
-    zi = Z(:,i);
-    bi = o.At(zi);
-    bi = bi';
-    B(i, :) = bi;
+allranks = 1:1:100;%200;
+resid = zeros(size(allranks));
+
+for i = 1:length(allranks)
+    targetrank = allranks(i);
+    
+    % form orthonormal basis
+    Z = rangeA(@(x)o.A(x), @(x)o.At(x), m, n, targetrank);
+
+    % form B = Z'A
+    B = zeros(targetrank, n);
+    size(B)
+    for j=1:targetrank
+        zj = Z(:,j);
+        bj = o.At(zj);
+        bj = bj';
+        B(j, :) = bj;
+    end
+
+    % form the QR factorization of B
+    [W,T] = qr(B);
+
+    % now the decomp. is Z T' W'
+    % the decomp. is Z W T
+    % solve least squares system
+    y = Z'*o.b;
+    q = W'*y;
+    x = T\q;
+
+    % do some error analysis
+    % residual
+    resid(i) = norm(o.b - o.A(x))/norm(o.b);
 end
 
-% form the QR factorization of B
-[W,T] = qr(B');
+plot(allranks, resid, 'k')
 
-% now the decomp. is Z T' W'
-% solve least squares system
