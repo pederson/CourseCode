@@ -1,6 +1,7 @@
 function [] = hw5_2()
 
-o = matrixfree
+% load the matrix
+o = matrixfree;
 m = o.m;
 n = o.n;
 fullrank = min([m,n]);

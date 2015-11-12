@@ -5,19 +5,22 @@ if nargin<5, problemstring = ''; end;
 rank = min([m,n]);
 
 %% part A
+disp('Part A')
 % compute the reduced SVD and plot singular values
 [U, S, V] = svd(A, 0);
 sing_vals = diag(S);
-figure()
+% figure()
+semilogy(sing_vals, 'b');
 hold on
-semilogy(sing_vals, 'b.');
-%semilogy([1, length(sing_vals)], [epsilon, epsilon], 'k--')
+semilogy([1, length(sing_vals)], [epsilon, epsilon], 'k--')
 title(['Singular values A: ', problemstring])
 xlabel('n')
 ylabel('singular value')
-%legend('Singular values','epsilon')
+legend('Singular values','epsilon')
+%savefig(['p1_a_singvals_',problemstring,'.fig'])
 
 %% part B
+disp('Part B')
 % explain whether A is rank deficient (or nearly)
 % if any singular values of A are smaller than epsilon
 % then the matrix is rank deficient
@@ -28,14 +31,15 @@ else
 end
 
 %% part C
+disp('Part C')
 % test svd, qr w/ pivot, qr w/o pivot, and rangeA.m function
 % to find the best rank-r approximation to Range(A)
 
 % QR w/ pivot
-[Qpiv, Rpiv, Ppiv] = qr(A, 0);
+[Qpiv, ~] = qr(A, 0);
 
 % QR w/o pivot
-[Q,R] = qr(A);
+[Q,~] = qr(A);
 
 % rangeA
 %QrangeA =rangeA(  @(x)A*x,  @(x)A'*x,  m, n, n);
@@ -69,23 +73,22 @@ for i=1:length(rs)
     qrpiverr(i) = norm(A - Qpivr*Qpivr'*A);
     qrerr(i) = norm(A - Qr*Qr'*A);
     rangeAerr(i) = norm(A - QrangeA*QrangeA'*A);
-%     disp(['    SVD error: ',num2str(norm(A - Ur*Sr*Vr'))])   % SVD
-%     disp(['    QR w/pivot error: ',num2str(norm(A - Qpivr*Rpivr))])   % QR w/pivot
-%     disp(['    QR w/o pivot error: ',num2str(norm(I-Qr'*Qr))])   % QR w/o pivot
-%     disp(['    rangeA error: ',num2str(100)])   % rangeA
-
+    
 end
 
 r = n*[1/16, 1/8, 1/4, 1/2]';
 figure()
+semilogy(r, svderr, 'ko-')
 hold on
-plot(r, svderr, 'ko-')
-plot(r, qrpiverr, 'b+-')
-plot(r, qrerr, 'gd-')
-plot(r, rangeAerr, 'r.-')
+semilogy(r, qrpiverr, 'b+-')
+semilogy(r, qrerr, 'gd-')
+semilogy(r, rangeAerr, 'r.-')
 legend('SVD','QR w/pivot','QR w/o pivot','rangeA')
+title(['Low-rank approximations: ',problemstring])
+%savefig(['p1_c_methods_',problemstring,'.fig'])
 
 %% part D
+disp('Part D')
 % use truncated SVD to solve least squares
 relcond_A = zeros(rank,1);
 relcond_b = zeros(rank,1);
@@ -126,52 +129,58 @@ r=1:rank;
 % (i)
 % plot relative cond, pertub A
 figure()
-plot(r, relcond_A, 'k.')
-title('relative condition number (pertub A) (Truncated SVD)')
+semilogy(r, relcond_A, 'k.')
+title(['Rel. Cond. # (pertub A) (Truncated): ',problemstring])
 xlabel('Rank r')
-ylabel('relative cond. number')
+ylabel('relative cond. number B')
+%savefig(['p1_d_relcond_A_',problemstring,'.fig'])
 
 % (ii)
 % plot relative cond, pertub b
 figure()
-plot(r, relcond_b, 'k+')
-title('relative condition number (pertub b) (Truncated SVD)')
+semilogy(r, relcond_b, 'k+')
+title(['Rel. Cond. # (pertub b) (Truncated): ',problemstring])
 xlabel('Rank r')
-ylabel('relative cond. number')
+ylabel('relative cond. number b')
+%savefig(['p1_d_relcond_b_singvals_',problemstring,'.fig'])
 
 % (iii)
 % plot the norm |xr|/|xstar| as fn(r)
 figure()
 semilogy(r, normx, 'k*')
-title('scaled norm of x_r (Truncated SVD)')
+title(['Norm of x_r (Truncated): ',problemstring])
 xlabel('Rank r')
-ylabel('|x_r|/|x_{*}|')
+ylabel('||x_r||/||x_{*}||')
+%savefig(['p1_d_xr_',problemstring,'.fig'])
 
 % (iv)
 % plot residual as fn(r)
 figure()
 semilogy(r, resid, 'ko')
-title('residual (Truncated SVD)')
+title(['Residual (Truncated): ',problemstring])
 xlabel('Rank r')
-ylabel('residual')
+ylabel('||b-Ax_r||/||b||')
+%savefig(['p1_d_resid_',problemstring,'.fig'])
 
 % (v)
 % plot the error as fn(r)
 figure()
 semilogy(r, error, 'kx')
-title('error in x_r (Truncated SVD)')
+title(['Error in x_r (Truncated): ',problemstring])
 xlabel('Rank r')
-ylabel('error')
+ylabel('||x_r-x_{star}||/||x_{star}||')
+%savefig(['p1_a_singvals_',problemstring,'.fig'])
 
 % (vi)
 % plot the residual v error for each r using loglog
 figure()
 loglog(error, resid, 'kd')
-title('residual v. error (Truncated SVD)')
-xlabel('error')
-ylabel('residual')
+title(['residual v. error (Truncated): ',problemstring])
+xlabel('||x_r-x_{star}||/||x_{star}||')
+ylabel('||b-Ax_r||/||b||')
 
 %% part E
+disp('Part E')
 % repeat part D but with regularized svd (beta = sigma_r)
 relcond_A = zeros(rank,1);
 relcond_b = zeros(rank,1);
@@ -217,47 +226,48 @@ r=1:rank;
 % (i)
 % plot relative cond, pertub A
 figure()
-plot(r, relcond_A, 'k.')
-title('relative condition number (pertub A) (Regularized SVD)')
+semilogy(r, relcond_A, 'k.')
+title(['Rel. Cond. # (pertub A) (Regularized): ',problemstring])
 xlabel('Rank r')
-ylabel('relative cond. number')
+ylabel('relative cond. number B')
 
 % (ii)
 % plot relative cond, pertub b
 figure()
-plot(r, relcond_b, 'k+')
-title('relative condition number (pertub b) (Regularized SVD)')
+semilogy(r, relcond_b, 'k+')
+title(['Rel. Cond. # (pertub b) (Regularized): ',problemstring])
 xlabel('Rank r')
-ylabel('relative cond. number')
+ylabel('relative cond. number b')
 
 % (iii)
 % plot the norm |xr|/|xstar| as fn(r)
 figure()
 semilogy(r, normx, 'k*')
-title('scaled norm of x_r (Regularized SVD)')
+title(['Norm of x_r (Regularized): ',problemstring])
 xlabel('Rank r')
-ylabel('|x_r|/|x_{*}|')
+ylabel('||x_r||/||x_{*}||')
 
 % (iv)
 % plot residual as fn(r)
 figure()
 semilogy(r, resid, 'ko')
-title('residual (Regularized SVD)')
+title(['Residual (Regularized): ',problemstring])
 xlabel('Rank r')
-ylabel('residual')
+ylabel('||b-Ax_r||/||b||')
 
 % (v)
 % plot the error as fn(r)
 figure()
 semilogy(r, error, 'kx')
-title('error in x_r (Regularized SVD)')
+title(['Error in x_r (Regularized): ',problemstring])
 xlabel('Rank r')
-ylabel('error')
+ylabel('||x_r-x_{star}||/||x_{star}||')
 
 % (vi)
 % plot the residual v error for each r using loglog
 figure()
 loglog(error, resid, 'kd')
-title('residual v. error (Regularized SVD)')
-xlabel('error')
-ylabel('residual')
+title(['residual v. error (Regularized): ',problemstring])
+xlabel('||x_r-x_{star}||/||x_{star}||')
+ylabel('||b-Ax_r||/||b||')
+
