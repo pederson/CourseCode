@@ -55,7 +55,7 @@ for p=1:5
     % 
     % Here I am defining the error as:
     %
-    % $$ error_{Range(A)} = ||A - Q_r Q_r' A||
+    % $$ error_{Range(A)} = ||A - Q_r Q_r' A|| $$
     %
     % If we have a matrix A and a basis for Range(A) called Q
     % Then A z brings any vector z into Range(A).
@@ -67,11 +67,11 @@ for p=1:5
     % result must be the zero vector.
     % Taking norms, we find
     %
-    % $$  ||(A - Q Q' A)z|| = 0
+    % $$  ||(A - Q Q' A)z|| = 0 $$
     %
     % the LHS is just the matrix norm so
     %
-    % $$  ||A - Q Q' A|| = 0
+    % $$  ||A - Q Q' A|| = 0 $$
     %
     % We can measure how "good" a basis is with this norm 
     
@@ -245,7 +245,7 @@ for p=1:5
     %
     % The regularized SVD solution is 
     %
-    % $$ x = V(\beta I + \Sigma ^2)^{-1}\Sigma U^* b
+    % $$ x = V(\beta I + \Sigma ^2)^{-1}\Sigma U^* b $$
     %
     % And this is truncated in the same way as the normal SVD
     %
