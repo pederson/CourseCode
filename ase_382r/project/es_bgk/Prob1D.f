@@ -160,6 +160,7 @@ c	    vym(ns,ipindx)=vy(ns)
 	stop
 	end program
 
+ccccccccccccccccccccc density cccccccccccccccccccccccccccccc
 	subroutine density(betav,dens)
 	real phi(500,-10:10,-10:10,-10:10),dens(500)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
@@ -178,7 +179,10 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+
+cccccccccccccccccccccc xvelocity ccccccccccccccccccccccccccc
 	subroutine xvelocity(betav,dens,xvel)
 	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
@@ -197,7 +201,10 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+
+ccccccccccccccccccccccc Temperature ccccccccccccccccccccccccc
 	subroutine Temp(betav,dens,xvel,Tcal)
 ! This routine has been modified to account for the fact that eta_ref=sqrt(k*T_ref/m) NOT  sqrt(2*k*T_ref/m)
 	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500),Tcal(500)
@@ -222,7 +229,10 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+
+ccccccccccccccccccccccccc yvelocity cccccccccccccccccccccccc
 	subroutine yvelocity(betav,dens,yvel)
 	real phi(500,-10:10,-10:10,-10:10),dens(500),yvel(500)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
@@ -241,7 +251,10 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+
+ccccccccccccccccccccccccc zvelocity ccccccccccccccccccccccccc
 	subroutine zvelocity(betav,dens,zvel)
 	real phi(500,-10:10,-10:10,-10:10),dens(500),zvel(500)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
@@ -260,7 +273,10 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+
+ccccccccccccccccccccccc krook collision operator ccccccccccccc
 	subroutine Krookcoll_1(dens,xvel,yvel,zvel,temp,betav,deltat)
 ! Calculations assuming Maxwell molecules - scaled frequency=scaled density
 	real phi(500,-10:10,-10:10,-10:10)
@@ -289,7 +305,11 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+
+
+ccccccccccccccccccccc convection step ccccccccccccccccccccccccc
 	subroutine convect(alphax,betav,deltat)
 ! First order upwind scheme	
 
@@ -366,7 +386,13 @@ c	    vym(ns,ipindx)=vy(ns)
 	
 	return
 	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	
+
+cccccccccccccccccccccccccccc Maxwellian distribution ccccccccccc 
+c
+c calculates a maxwellian distribution and returns it as phif
+c
 	subroutine Maxwell_1(betav,ndf,uf,Tf,phif)
 ! This Maxwellian is defined using eta_ref=sqrt(k*T_ref/m) instead of sqrt(2*k*T_ref/m)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
@@ -387,4 +413,5 @@ c	    vym(ns,ipindx)=vy(ns)
 	enddo
 	return
 	end subroutine
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 	
