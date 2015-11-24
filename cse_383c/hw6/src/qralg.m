@@ -12,6 +12,7 @@ ct=1;
 while (abs(T(m,m-1)) >= 1e-12)
 
     %{
+    % uncomment this part for unshifted qr method
     % qr factorize T
     [Q, R] = qr(T);
     
