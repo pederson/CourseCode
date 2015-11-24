@@ -11,11 +11,22 @@ errvals(1) = abs(T(m,m-1));
 ct=1;
 while (abs(T(m,m-1)) >= 1e-12)
 
+    %{
     % qr factorize T
     [Q, R] = qr(T);
     
     % update T
-    T = R*Q;    
+    T = R*Q;
+    %}
+    
+    % wilkinson shift method
+    delta = (T(end-1, end-1) - T(end, end))/2;
+    mu = T(end,end) - sign(delta)*T(end, end-1)^2/(abs(delta) + sqrt(delta^2 + T(end, end-1)^2));
+    % qr factorize
+    [Q, R] = qr(T - mu*eye(n));
+    
+    % recompose T
+    T = R*Q + mu*eye(n);
     
     % update counter
     ct = ct+1;
@@ -26,5 +37,4 @@ while (abs(T(m,m-1)) >= 1e-12)
 end
 
 errvals = errvals(1:ct);
-ct
 Tnew = T;
