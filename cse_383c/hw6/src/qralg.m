@@ -20,6 +20,7 @@ while (abs(T(m,m-1)) >= 1e-12)
     T = R*Q;
     %}
     
+    %
     % wilkinson shift method
     delta = (T(end-1, end-1) - T(end, end))/2;
     mu = T(end,end) - sign(delta)*T(end, end-1)^2/(abs(delta) + sqrt(delta^2 + T(end, end-1)^2));
@@ -28,6 +29,7 @@ while (abs(T(m,m-1)) >= 1e-12)
     
     % recompose T
     T = R*Q + mu*eye(n);
+    %}
     
     % update counter
     ct = ct+1;

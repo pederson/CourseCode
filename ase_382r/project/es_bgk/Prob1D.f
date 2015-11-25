@@ -28,6 +28,22 @@ c
 c       
 c	Read space, velocity, and time scaled discretization steps
 c
+c 	The variables are as follows:
+c
+c 	nspace 		- number of space steps
+c 	iv*max/min 	- max/min normalized velocity space index
+c 	alphax 		- scaled deltaX
+c 	betav 		- scaled deltaV
+c 	deltat 		- scaled deltaT
+c
+c 	ndf			- scaled freestream density
+c 	uf 			- scaled freestream velocity
+c 	Tf 			- scaled freestream Temperature
+c
+c 	ntstep 		- number of time steps total
+c 	nsplot 		- spatial index location to use for dist. output
+c 	npr 		- print interval (in units of time steps)
+c
 	read(11,*) nspace, ivxmin, ivxmax, ivymin, ivymax, ivzmin, ivzmax
 	if (nspace.gt.500) then
 	  write(*,9003) nspace
@@ -56,7 +72,7 @@ c
 	endif
 	ipcount=npr ! Initialize counter for print interval to print initial values
 	ipindx=1 ! Initialize print matrix column index
-c
+c 
 c       Initialize distribution function. Freestream density and temperature are typically
 c	reference values (unity), but to preserve generality they are free inputs.
 c
@@ -105,7 +121,10 @@ c	      vym(ns,ipindx)=vy(ns)
 	  else
 	    ipcount=ipcount+1 ! Increment print interval counter
 	  endif
-	  call Krookcoll_1(nd,ux,vy,wz,T,betav,deltat)
+	  ! Ellipsoidal Statistical collision term (ES-BGK)
+	  call ESBGKcoll_1(nd, ux, vy, wz, T, betav, deltat)
+	  ! Krook collision term (BGK)
+	  ! call Krookcoll_1(nd,ux,vy,wz,T,betav,deltat)
 	  if(ntime.eq.(ntstep/2)) then
 	    ! Write out intermediate distribution function
 	    do i=ivxmin,ivxmax
@@ -297,7 +316,47 @@ ccccccccccccccccccccccc krook collision operator ccccccccccccc
 		Czsq=(betav*float(k)-zvel(ns))**2
 		Csq=Cxsq+Cysq+Czsq
 		phieq=normfac*exp(-Csq*T_denom)
+		! This line implements the actual krook operator
 		delphi=deltat*dens(ns)*(phieq-phi(ns,i,j,k))
+		phi(ns,i,j,k)=phi(ns,i,j,k)+delphi
+	      enddo
+	    enddo
+	  enddo
+	enddo
+	return
+	end subroutine
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+
+
+ccccccccccccccccccccccc ESBGK collision operator ccccccccccccc
+	subroutine ESBGKcoll_1(dens,xvel,yvel,zvel,temp,betav,deltat)
+! Calculations assuming Maxwell molecules - scaled frequency=scaled density
+	real phi(500,-10:10,-10:10,-10:10)
+	real normfac, K, lambda, Pr;
+	real dens(500),xvel(500), yvel(500),zvel(500),temp(500)
+	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
+	common /props/ phi
+	data pi/3.1415926536/
+	data kboltz/1.38064852e-23/ ! is this even necessary with normalization?
+
+	Pr = 2.0/3.0;
+	lambda = -0.5;
+	K = kb*temp(ns)
+! Compute change in phi from a local Maxwellian at each point in space
+	do ns=1,nspace
+	  normfac=dens(ns)/sqrt((2.*pi*temp(ns))**3)
+	  T_denom=0.5/temp(ns)
+	  do i=ivxmin,ivxmax
+	    do j=ivymin,ivymax
+	      do k=ivzmin,ivzmax
+		Cxsq=(betav*float(i)-xvel(ns))**2
+		Cysq=(betav*float(j)-yvel(ns))**2		
+		Czsq=(betav*float(k)-zvel(ns))**2
+		Csq=Cxsq+Cysq+Czsq
+		psi=normfac*exp(-Csq*T_denom)
+		! This line implements the actual ESBGK operator
+		delphi=deltat*dens(ns)*K*(psi-phi(ns,i,j,k))
 		phi(ns,i,j,k)=phi(ns,i,j,k)+delphi
 	      enddo
 	    enddo
@@ -391,7 +450,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 cccccccccccccccccccccccccccc Maxwellian distribution ccccccccccc 
 c
-c calculates a maxwellian distribution and returns it as phif
+c calculates a maxwellian distribution for initial state and returns it
 c
 	subroutine Maxwell_1(betav,ndf,uf,Tf,phif)
 ! This Maxwellian is defined using eta_ref=sqrt(k*T_ref/m) instead of sqrt(2*k*T_ref/m)
