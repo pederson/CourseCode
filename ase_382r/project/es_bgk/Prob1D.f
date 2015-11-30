@@ -333,34 +333,120 @@ ccccccccccccccccccccccc ESBGK collision operator ccccccccccccc
 	subroutine ESBGKcoll_1(dens,xvel,yvel,zvel,temp,betav,deltat)
 ! Calculations assuming Maxwell molecules - scaled frequency=scaled density
 	real phi(500,-10:10,-10:10,-10:10)
-	real normfac, K, lambda, Pr;
+	real eps_ij(3,3), M_ij(3,3), Ms_ij(3,3), CiCj(3,3)
+	real normfac, Kf, lambda, Pr, trace_M, contract
 	real dens(500),xvel(500), yvel(500),zvel(500),temp(500)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
 	common /props/ phi
 	data pi/3.1415926536/
 	data kboltz/1.38064852e-23/ ! is this even necessary with normalization?
 
-	Pr = 2.0/3.0;
-	lambda = -0.5;
-	K = kb*temp(ns)
+	Pr = 2.0/3.0
+	lambda = -0.5
 ! Compute change in phi from a local Maxwellian at each point in space
 	do ns=1,nspace
-	  normfac=dens(ns)/sqrt((2.*pi*temp(ns))**3)
-	  T_denom=0.5/temp(ns)
+		Kf = temp(ns)*Pr
+		normfac=dens(ns)/sqrt((2.*pi*temp(ns))**3)
+
+		! zero out M_ij
+		do l=1,3
+			do m=1,3
+				M_ij(l,m) = 0
+			enddo
+		enddo
+	  
+	  ! calculate M_ij and Ms_ij
 	  do i=ivxmin,ivxmax
 	    do j=ivymin,ivymax
 	      do k=ivzmin,ivzmax
-		Cxsq=(betav*float(i)-xvel(ns))**2
-		Cysq=(betav*float(j)-yvel(ns))**2		
-		Czsq=(betav*float(k)-zvel(ns))**2
-		Csq=Cxsq+Cysq+Czsq
-		psi=normfac*exp(-Csq*T_denom)
-		! This line implements the actual ESBGK operator
-		delphi=deltat*dens(ns)*K*(psi-phi(ns,i,j,k))
-		phi(ns,i,j,k)=phi(ns,i,j,k)+delphi
+
+	      	! there are 9 C_i*C_j terms
+	      	CiCj(1,1) = (betav*float(i)-xvel(ns))**2
+	      	CiCj(1,2) = (betav*float(i)-xvel(ns))
+     &					*(betav*float(j)-yvel(ns))
+	      	CiCj(1,3) = (betav*float(i)-xvel(ns))
+     &     				*(betav*float(k)-zvel(ns))
+	      	CiCj(2,1) = (betav*float(j)-yvel(ns))
+     &     				*(betav*float(i)-xvel(ns))
+	      	CiCj(2,2) = (betav*float(j)-yvel(ns))**2
+	      	CiCj(2,3) = (betav*float(j)-yvel(ns))
+     &     				*(betav*float(k)-zvel(ns))
+	      	CiCj(3,1) = (betav*float(k)-zvel(ns))
+     &     				*(betav*float(i)-xvel(ns))
+	      	CiCj(3,2) = (betav*float(k)-zvel(ns))
+     &     				*(betav*float(j)-yvel(ns))
+	      	CiCj(3,3) = (betav*float(k)-zvel(ns))**2
+
+	      	! these terms are summed up in M_ij
+	      	do l=1,3
+	      		do m=1,3
+	      			M_ij(l,m) = M_ij(l,m) + phi(ns,i,j,k)*CiCj(l,m)*betav
+	      		enddo
+	      	enddo
+
 	      enddo
 	    enddo
 	  enddo
+
+		! Calculate Ms_ij
+		trace_M = M_ij(1,1) + M_ij(2,2) + M_ij(3,3)
+		do l=1,3
+			do m=1,3
+				Ms_ij(l,m) = M_ij(l,m)
+				if (l .eq. m) then
+					Ms_ij(l,m) = Ms_ij(l,m) - trace_M/3.0
+				endif
+			enddo
+		enddo
+
+		! calculate eps_ij
+		do l=1,3
+			do m=1,3
+				eps_ij(l,m) = -lambda*Ms_ij(l,m)/(temp(ns)**2)
+				if (l .eq. m) then
+					eps_ij(l,m) = eps_ij(l,m) + 1.0/temp(ns)
+				endif
+			enddo
+		enddo
+
+	  do i=ivxmin,ivxmax
+	    do j=ivymin,ivymax
+	      do k=ivzmin,ivzmax
+
+	      	! there are 9 C_i*C_j terms
+	      	CiCj(1,1) = (betav*float(i)-xvel(ns))**2
+	      	CiCj(1,2) = (betav*float(i)-xvel(ns))
+     &					*(betav*float(j)-yvel(ns))
+	      	CiCj(1,3) = (betav*float(i)-xvel(ns))
+     &     				*(betav*float(k)-zvel(ns))
+	      	CiCj(2,1) = (betav*float(j)-yvel(ns))
+     &     				*(betav*float(i)-xvel(ns))
+	      	CiCj(2,2) = (betav*float(j)-yvel(ns))**2
+	      	CiCj(2,3) = (betav*float(j)-yvel(ns))
+     &     				*(betav*float(k)-zvel(ns))
+	      	CiCj(3,1) = (betav*float(k)-zvel(ns))
+     &     				*(betav*float(i)-xvel(ns))
+	      	CiCj(3,2) = (betav*float(k)-zvel(ns))
+     &     				*(betav*float(j)-yvel(ns))
+	      	CiCj(3,3) = (betav*float(k)-zvel(ns))**2
+
+			! form the eps_ij*Ci*Cj contraction
+			contract = 0.0
+			do l=1,3
+				do m=1,3
+					contract = contract + eps_ij(l,m)*CiCj(l,m)
+				enddo
+			enddo
+
+			! This line implements the actual ESBGK operator
+	      	psi=normfac*exp(-0.5*contract)
+			delphi=deltat*dens(ns)*Kf*(psi-phi(ns,i,j,k))
+			phi(ns,i,j,k)=phi(ns,i,j,k)+delphi
+		  enddo
+		enddo
+	  enddo
+
+
 	enddo
 	return
 	end subroutine
