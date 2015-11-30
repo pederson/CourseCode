@@ -341,6 +341,7 @@ ccccccccccccccccccccccc ESBGK collision operator ccccccccccccc
 	data pi/3.1415926536/
 	data kboltz/1.38064852e-23/ ! is this even necessary with normalization?
 
+	betacub=betav**3
 	Pr = 2.0/3.0
 	lambda = -0.5
 ! Compute change in phi from a local Maxwellian at each point in space
@@ -380,13 +381,19 @@ ccccccccccccccccccccccc ESBGK collision operator ccccccccccccc
 	      	! these terms are summed up in M_ij
 	      	do l=1,3
 	      		do m=1,3
-	      			M_ij(l,m) = M_ij(l,m) + phi(ns,i,j,k)*CiCj(l,m)*betav
+	      			M_ij(l,m) = M_ij(l,m) + phi(ns,i,j,k)*CiCj(l,m)
 	      		enddo
 	      	enddo
 
 	      enddo
 	    enddo
 	  enddo
+	  	! multiply the betav^3 factor that comes from the dV term
+		do l=1,3
+			do m=1,3
+				M_ij(l,m) = M_ij(l,m)*betacub
+			enddo
+		enddo
 
 		! Calculate Ms_ij
 		trace_M = M_ij(1,1) + M_ij(2,2) + M_ij(3,3)
