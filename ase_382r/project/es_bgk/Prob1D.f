@@ -4,7 +4,8 @@
 	real phi1(500,-10:10,-10:10,-10:10)	
 	real nd(500), ux(500), T(500), vy(500), wz(500)
 	real ndm(500,11), uxm(500,11), vym(500,11), Tm(500,11)
-	real q(500), tauxx(500), norm, ndf, uf, Tf, timestamp(11)
+	real pm(500,11), qm(500,11), tauxxm(500,11)
+	real p(500), q(500), tauxx(500), norm, ndf, uf, Tf, timestamp(11)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
 	common /props/ phi
 	common /coll/ phif
@@ -13,6 +14,7 @@ c	 phi - scaled density normalized distribution function
 c	 nd - scaled number density
 c	 ux - scaled x gas velocity, similarly vy, wz
 c	 T  - scaled temperature
+c 	 p  - scaled pressure
 c	 q  - scaled heat flux - not yet implemented
 c	 tauxx - scaled normal shear stress - not yet implemented
 c	 ndm, uxm, Tm are matrices to get time-dependent spatial profiles of variables
@@ -25,6 +27,9 @@ c
 	open(unit=15, file='Dprof.txt',status='unknown')
 	open(unit=16, file='Uprof.txt',status='unknown')
 	open(unit=17, file='Tprof.txt',status='unknown')
+	open(unit=18, file='Pprof.txt',status='unknown')
+	open(unit=19, file='Qprof.txt',status='unknown')
+	open(unit=20, file='TAUprof.txt',status='unknown')
 c       
 c	Read space, velocity, and time scaled discretization steps
 c
@@ -106,6 +111,9 @@ c
 	  call yvelocity(betav,nd,vy)
 	  call zvelocity(betav,nd,wz)	
 	  call Temp(betav,nd,ux,T)
+	  call pressure(betav,nd,T,p)
+	  call heatflux(betav,nd,ux,q)
+	  call tau11(betav,nd,ux,p,tauxx)
 ! write properties into property matrices for time dependent profiles	  
 	  if (ipcount.eq.npr) then
 	    do ns=1,nspace
@@ -113,6 +121,9 @@ c
 	      uxm(ns,ipindx)=ux(ns)
 c	      vym(ns,ipindx)=vy(ns)
 	      Tm(ns,ipindx)=T(ns)
+	      pm(ns,ipindx)=p(ns)
+	      qm(ns,ipindx)=q(ns)
+	      tauxxm(ns,ipindx)=tauxx(ns)
 	    enddo
 	      write(*,9002)ipindx,ntime
  9002	      format('ipindx =',i3,5x,'ntime =',i3)
@@ -147,12 +158,18 @@ c	      vym(ns,ipindx)=vy(ns)
 	  call yvelocity(betav,nd,vy)
 	  call zvelocity(betav,nd,wz)	
 	  call Temp(betav,nd,ux,T)
+	  call pressure(betav,nd,T,p)
+	  call heatflux(betav,nd,ux,q)
+	  call tau11(betav,nd,ux,p,tauxx)
 ! write properties into property matrices for time dependent profiles	  
 	  do ns=1,nspace
 	    ndm(ns,ipindx)=nd(ns)
 	    uxm(ns,ipindx)=ux(ns)
 c	    vym(ns,ipindx)=vy(ns)
 	    Tm(ns,ipindx)=T(ns)
+	    pm(ns,ipindx)=p(ns)
+	    qm(ns,ipindx)=q(ns)
+	    tauxxm(ns,ipindx)=tauxx(ns)
 	  enddo	
 ! Write out property profiles
 	do ipr=1,ipindx-1
@@ -165,15 +182,24 @@ c	    vym(ns,ipindx)=vy(ns)
      c  'velocity = ',f6.3,2x,'temperature = ',f6.3)
 	write(16,3900) alphax, betav, deltat, ndf, uf, Tf
 	write(17,3900) alphax, betav, deltat, ndf, uf, Tf
+	write(18,3900) alphax, betav, deltat, ndf, uf, Tf
+	write(19,3900) alphax, betav, deltat, ndf, uf, Tf
+	write(20,3900) alphax, betav, deltat, ndf, uf, Tf
 	write(15,4001)(timestamp(ipr),ipr=1,ipindx)
 	write(16,4001)(timestamp(ipr),ipr=1,ipindx)
 	write(17,4001)(timestamp(ipr),ipr=1,ipindx)
+	write(18,4001)(timestamp(ipr),ipr=1,ipindx)
+	write(19,4001)(timestamp(ipr),ipr=1,ipindx)
+	write(20,4001)(timestamp(ipr),ipr=1,ipindx)
  4001	format('x',',',11('t= ',f8.3,",",2x))
 	do ns=1,nspace
 	   xx=float(ns-1)*alphax
 	  write(15,4002)xx,(ndm(ns,ipr),ipr=1,ipindx)
 	  write(16,4002)xx,(uxm(ns,ipr),ipr=1,ipindx)
 	  write(17,4002)xx,(Tm(ns,ipr),ipr=1,ipindx)
+	  write(18,4002)xx,(pm(ns,ipr),ipr=1,ipindx)
+	  write(19,4002)xx,(qm(ns,ipr),ipr=1,ipindx)
+	  write(20,4002)xx,(tauxxm(ns,ipr),ipr=1,ipindx)
  4002	  format(12(f12.6,',',3x))
 	enddo
 	stop
@@ -190,7 +216,7 @@ ccccccccccccccccccccc density cccccccccccccccccccccccccccccc
 	  do i=ivxmin,ivxmax
 	    do j=ivymin,ivymax
 	     do k=ivzmin,ivzmax
-		dens(ns)=dens(ns)+phi(ns,i,j,k)
+			dens(ns)=dens(ns)+phi(ns,i,j,k)
 	     enddo
 	    enddo
 	  enddo
@@ -212,7 +238,7 @@ cccccccccccccccccccccc xvelocity ccccccccccccccccccccccccccc
 	  do i=ivxmin,ivxmax
 	    do j=ivymin,ivymax
 	      do k=ivzmin,ivzmax
-		xvel(ns)=xvel(ns)+phi(ns,i,j,k)*betav*float(i)
+			xvel(ns)=xvel(ns)+phi(ns,i,j,k)*betav*float(i)
 	      enddo
 	    enddo
 	  enddo
@@ -237,10 +263,10 @@ ccccccccccccccccccccccc Temperature ccccccccccccccccccccccccc
 	    do j=ivymin,ivymax
 	      do k=ivzmin,ivzmax
 	        Cxsq=(betav*float(i)-xvel(ns))**2
-		Cysq=betasq*float(j*j)
-		Czsq=betasq*float(k*k)
-		Csq=Cxsq+Cysq+Czsq
-		Tcal(ns)=Tcal(ns)+phi(ns,i,j,k)*Csq
+			Cysq=betasq*float(j*j)
+			Czsq=betasq*float(k*k)
+			Csq=Cxsq+Cysq+Czsq
+			Tcal(ns)=Tcal(ns)+phi(ns,i,j,k)*Csq
 	      enddo
 	    enddo
 	  enddo
@@ -262,7 +288,7 @@ ccccccccccccccccccccccccc yvelocity cccccccccccccccccccccccc
 	  do i=ivxmin,ivxmax
 	    do j=ivymin,ivymax
 	      do k=ivzmin,ivzmax
-		yvel(ns)=yvel(ns)+phi(ns,i,j,k)*betav*float(j)
+			yvel(ns)=yvel(ns)+phi(ns,i,j,k)*betav*float(j)
 	      enddo
 	    enddo
 	  enddo
@@ -284,7 +310,7 @@ ccccccccccccccccccccccccc zvelocity ccccccccccccccccccccccccc
 	  do i=ivxmin,ivxmax
 	    do j=ivymin,ivymax
 	      do k=ivzmin,ivzmax
-		zvel(ns)=zvel(ns)+phi(ns,i,j,k)*betav*float(k)
+			zvel(ns)=zvel(ns)+phi(ns,i,j,k)*betav*float(k)
 	      enddo
 	    enddo
 	  enddo
@@ -293,6 +319,78 @@ ccccccccccccccccccccccccc zvelocity ccccccccccccccccccccccccc
 	return
 	end subroutine
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+
+ccccccccccccccccccccccc Pressure ccccccccccccccccccccccccc
+	subroutine pressure(betav, dens, temp, press)
+! This routine has been modified to account for the fact that eta_ref=sqrt(k*T_ref/m) NOT  sqrt(2*k*T_ref/m)
+	real phi(500,-10:10,-10:10,-10:10),dens(500),temp(500),press(500)
+	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
+	common /props/ phi
+	do ns=1,nspace
+	  press(ns)=dens(ns)*temp(ns)
+	enddo
+	return
+	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+
+ccccccccccccccccccccccc heat flux ccccccccccccccccccccccccc
+	subroutine heatflux(betav,dens,xvel,qn)
+	! this only calculates heat flux in the x direction (b/c 1D flow)
+	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500),qn(500)
+	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
+	common /props/ phi
+	betasq=betav*betav
+	betacub=betasq*betav
+	do ns=1,nspace
+	  qn(ns)=0.
+	  do i=ivxmin,ivxmax
+	    do j=ivymin,ivymax
+	      do k=ivzmin,ivzmax
+	      	Cx=(betav*float(i)-xvel(ns))
+	        Cxsq=Cx**2
+			Cysq=betasq*float(j*j)
+			Czsq=betasq*float(k*k)
+			Csq=Cxsq+Cysq+Czsq
+			qn(ns)=qn(ns)+phi(ns,i,j,k)*Csq*Cx
+	      enddo
+	    enddo
+	  enddo
+	  qn(ns)=qn(ns)*betacub*dens(ns)/2.0
+	enddo
+	return
+	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+
+ccccccccccccccccccccccc shear stress ccccccccccccccccccccccccc
+	subroutine tau11(betav,dens,xvel,press,tau)
+	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500)
+	real press(500),tau(500)
+	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
+	common /props/ phi
+	betasq=betav*betav
+	betacub=betasq*betav
+	do ns=1,nspace
+	  tau(ns)=0.
+	  do i=ivxmin,ivxmax
+	    do j=ivymin,ivymax
+	      do k=ivzmin,ivzmax
+	        Cxsq=(betav*float(i)-xvel(ns))**2
+			Cysq=betasq*float(j*j)
+			Czsq=betasq*float(k*k)
+			Csq=Cxsq+Cysq+Czsq
+			tau(ns)=tau(ns)+phi(ns,i,j,k)*Cxsq
+	      enddo
+	    enddo
+	  enddo
+	  tau(ns)= -1.0*tau(ns)*betacub*dens(ns)
+	  tau(ns)=tau(ns) + press(ns)
+	enddo
+	return
+	end subroutine
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
 ccccccccccccccccccccccc krook collision operator ccccccccccccc
@@ -331,7 +429,7 @@ ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 ccccccccccccccccccccccc ESBGK collision operator ccccccccccccc
 	subroutine ESBGKcoll_1(dens,xvel,yvel,zvel,temp,betav,deltat)
-! Calculations assuming Maxwell molecules - scaled frequency=scaled density
+! Calculations assuming K_hat = 1
 	real phi(500,-10:10,-10:10,-10:10)
 	real eps_ij(3,3), M_ij(3,3), Ms_ij(3,3), CiCj(3,3)
 	real normfac, Kf, lambda, Pr, trace_M, contract
@@ -346,7 +444,7 @@ ccccccccccccccccccccccc ESBGK collision operator ccccccccccccc
 	lambda = -0.5
 ! Compute change in phi from a local Maxwellian at each point in space
 	do ns=1,nspace
-		Kf = temp(ns)*Pr
+		Kf = 1.0 !temp(ns)*Pr
 		normfac=dens(ns)/sqrt((2.*pi*temp(ns))**3)
 
 		! zero out M_ij
