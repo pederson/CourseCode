@@ -4,8 +4,10 @@
 	real phi1(500,-10:10,-10:10,-10:10)	
 	real nd(500), ux(500), T(500), vy(500), wz(500)
 	real ndm(500,11), uxm(500,11), vym(500,11), Tm(500,11)
-	real pm(500,11), qm(500,11), tauxxm(500,11)
-	real p(500), q(500), tauxx(500), norm, ndf, uf, Tf, timestamp(11)
+	real pm(500,11), q1m(500,11), q2m(500,11), q3m(500,11)
+	real tau11m(500,11)
+	real p(500), q1(500), q2(500), q3(500), tau11(500)
+	real norm, ndf, uf, Tf, timestamp(11)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
 	common /props/ phi
 	common /coll/ phif
@@ -15,8 +17,8 @@ c	 nd - scaled number density
 c	 ux - scaled x gas velocity, similarly vy, wz
 c	 T  - scaled temperature
 c 	 p  - scaled pressure
-c	 q  - scaled heat flux - not yet implemented
-c	 tauxx - scaled normal shear stress - not yet implemented
+c	 q  - scaled heat flux
+c	 tauxx - scaled normal shear stress
 c	 ndm, uxm, Tm are matrices to get time-dependent spatial profiles of variables
 c        Need to initialize arrays tauxxm and qxm for time-dependent profiles of tauxx and q
 c
@@ -28,8 +30,10 @@ c
 	open(unit=16, file='Uprof.txt',status='unknown')
 	open(unit=17, file='Tprof.txt',status='unknown')
 	open(unit=18, file='Pprof.txt',status='unknown')
-	open(unit=19, file='Qprof.txt',status='unknown')
-	open(unit=20, file='TAUprof.txt',status='unknown')
+	open(unit=19, file='Q1prof.txt',status='unknown')
+	open(unit=20, file='Q2prof.txt',status='unknown')
+	open(unit=21, file='Q3prof.txt',status='unknown')
+	open(unit=22, file='TAUprof.txt',status='unknown')
 c       
 c	Read space, velocity, and time scaled discretization steps
 c
@@ -112,8 +116,10 @@ c
 	  call zvelocity(betav,nd,wz)	
 	  call Temp(betav,nd,ux,T)
 	  call pressure(betav,nd,T,p)
-	  call heatflux(betav,nd,ux,q)
-	  call tau11(betav,nd,ux,p,tauxx)
+	  call heatflux(betav,nd,ux,vy,wz,1.,q1)
+	  call heatflux(betav,nd,ux,vy,wz,2.,q2)
+	  call heatflux(betav,nd,ux,vy,wz,3.,q3)
+	  call tauij(betav,nd,ux,vy,wz,p,1.,1.,tau11)
 ! write properties into property matrices for time dependent profiles	  
 	  if (ipcount.eq.npr) then
 	    do ns=1,nspace
@@ -122,8 +128,10 @@ c
 c	      vym(ns,ipindx)=vy(ns)
 	      Tm(ns,ipindx)=T(ns)
 	      pm(ns,ipindx)=p(ns)
-	      qm(ns,ipindx)=q(ns)
-	      tauxxm(ns,ipindx)=tauxx(ns)
+	      q1m(ns,ipindx)=q1(ns)
+	      q2m(ns,ipindx)=q2(ns)
+	      q3m(ns,ipindx)=q3(ns)
+	      tau11m(ns,ipindx)=tau11(ns)
 	    enddo
 	      write(*,9002)ipindx,ntime
  9002	      format('ipindx =',i3,5x,'ntime =',i3)
@@ -133,14 +141,15 @@ c	      vym(ns,ipindx)=vy(ns)
 	    ipcount=ipcount+1 ! Increment print interval counter
 	  endif
 	  ! Ellipsoidal Statistical collision term (ES-BGK)
-	  call ESBGKcoll_1(nd, ux, vy, wz, T, betav, deltat)
+	  !call ESBGKcoll_1(nd, ux, vy, wz, T, betav, deltat)
 	  ! Krook collision term (BGK)
-	  ! call Krookcoll_1(nd,ux,vy,wz,T,betav,deltat)
-	  if(ntime.eq.(ntstep/2)) then
+	  call Krookcoll_1(nd,ux,vy,wz,T,betav,deltat)
+	  !if(ntime.eq.(ntstep/2)) then
+	  if(float(ntime)*deltat .eq. 40.) then ! plot at time step 40
 	    ! Write out intermediate distribution function
 	    do i=ivxmin,ivxmax
 	      do j=ivymin,ivymax
-		write(13,2000)i,j,phi(nsplot,i,j,0)
+			write(13,2000)i,j,phi(nsplot,i,j,0)
 	      enddo
 	    enddo
 	  endif
@@ -159,8 +168,10 @@ c	      vym(ns,ipindx)=vy(ns)
 	  call zvelocity(betav,nd,wz)	
 	  call Temp(betav,nd,ux,T)
 	  call pressure(betav,nd,T,p)
-	  call heatflux(betav,nd,ux,q)
-	  call tau11(betav,nd,ux,p,tauxx)
+	  call heatflux(betav,nd,ux,vy,wz,1.,q1)
+	  call heatflux(betav,nd,ux,vy,wz,2.,q2)
+	  call heatflux(betav,nd,ux,vy,wz,3.,q3)
+	  call tauij(betav,nd,ux,vy,wz,p,1.,1.,tau11)
 ! write properties into property matrices for time dependent profiles	  
 	  do ns=1,nspace
 	    ndm(ns,ipindx)=nd(ns)
@@ -168,8 +179,10 @@ c	      vym(ns,ipindx)=vy(ns)
 c	    vym(ns,ipindx)=vy(ns)
 	    Tm(ns,ipindx)=T(ns)
 	    pm(ns,ipindx)=p(ns)
-	    qm(ns,ipindx)=q(ns)
-	    tauxxm(ns,ipindx)=tauxx(ns)
+	    q1m(ns,ipindx)=q1(ns)
+	    q2m(ns,ipindx)=q2(ns)
+	    q3m(ns,ipindx)=q3(ns)
+	    tau11m(ns,ipindx)=tau11(ns)
 	  enddo	
 ! Write out property profiles
 	do ipr=1,ipindx-1
@@ -191,6 +204,8 @@ c	    vym(ns,ipindx)=vy(ns)
 	write(18,4001)(timestamp(ipr),ipr=1,ipindx)
 	write(19,4001)(timestamp(ipr),ipr=1,ipindx)
 	write(20,4001)(timestamp(ipr),ipr=1,ipindx)
+	write(21,4001)(timestamp(ipr),ipr=1,ipindx)
+	write(22,4001)(timestamp(ipr),ipr=1,ipindx)
  4001	format('x',',',11('t= ',f8.3,",",2x))
 	do ns=1,nspace
 	   xx=float(ns-1)*alphax
@@ -198,8 +213,10 @@ c	    vym(ns,ipindx)=vy(ns)
 	  write(16,4002)xx,(uxm(ns,ipr),ipr=1,ipindx)
 	  write(17,4002)xx,(Tm(ns,ipr),ipr=1,ipindx)
 	  write(18,4002)xx,(pm(ns,ipr),ipr=1,ipindx)
-	  write(19,4002)xx,(qm(ns,ipr),ipr=1,ipindx)
-	  write(20,4002)xx,(tauxxm(ns,ipr),ipr=1,ipindx)
+	  write(19,4002)xx,(q1m(ns,ipr),ipr=1,ipindx)
+	  write(20,4002)xx,(q2m(ns,ipr),ipr=1,ipindx)
+	  write(21,4002)xx,(q3m(ns,ipr),ipr=1,ipindx)
+	  write(22,4002)xx,(tau11m(ns,ipr),ipr=1,ipindx)
  4002	  format(12(f12.6,',',3x))
 	enddo
 	stop
@@ -336,27 +353,60 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
 ccccccccccccccccccccccc heat flux ccccccccccccccccccccccccc
-	subroutine heatflux(betav,dens,xvel,qn)
-	! this only calculates heat flux in the x direction (b/c 1D flow)
-	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500),qn(500)
+	subroutine heatflux(betav,dens,xvel,yvel,zvel,component,qn)
+	! this only calculates heat flux in one direction (b/c 1D flow)
+	! the direction is specified by the component input (x=1, y=2, z=3)
+	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500)
+	real yvel(500),zvel(500),qn(500)
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
 	common /props/ phi
 	betasq=betav*betav
 	betacub=betasq*betav
 	do ns=1,nspace
 	  qn(ns)=0.
-	  do i=ivxmin,ivxmax
-	    do j=ivymin,ivymax
-	      do k=ivzmin,ivzmax
-	      	Cx=(betav*float(i)-xvel(ns))
-	        Cxsq=Cx**2
-			Cysq=betasq*float(j*j)
-			Czsq=betasq*float(k*k)
-			Csq=Cxsq+Cysq+Czsq
-			qn(ns)=qn(ns)+phi(ns,i,j,k)*Csq*Cx
-	      enddo
-	    enddo
-	  enddo
+
+	  if (component .eq. 1.) then
+		  do i=ivxmin,ivxmax
+		    do j=ivymin,ivymax
+		      do k=ivzmin,ivzmax
+		      	Cx=(betav*float(i)-xvel(ns))
+		        Cxsq=Cx**2
+				Cysq=(betav*float(j) - yvel(ns))**2
+				Czsq=(betav*float(k) - zvel(ns))**2
+				Csq=Cxsq+Cysq+Czsq
+				qn(ns)=qn(ns)+phi(ns,i,j,k)*Csq*Cx
+		      enddo
+		    enddo
+		  enddo
+	  endif
+	  if (component .eq. 2.) then
+		  do i=ivxmin,ivxmax
+		    do j=ivymin,ivymax
+		      do k=ivzmin,ivzmax
+		      	Cy=(betav*float(j)-yvel(ns))
+		        Cysq=Cy**2
+				Cxsq=(betav*float(i) - xvel(ns))**2
+				Czsq=(betav*float(k) - zvel(ns))**2
+				Csq=Cxsq+Cysq+Czsq
+				qn(ns)=qn(ns)+phi(ns,i,j,k)*Csq*Cy
+		      enddo
+		    enddo
+		  enddo
+	  endif
+	  if (component .eq. 3.) then
+		  do i=ivxmin,ivxmax
+		    do j=ivymin,ivymax
+		      do k=ivzmin,ivzmax
+		      	Cz=(betav*float(k)-zvel(ns))
+		        Czsq=Cz**2
+				Cxsq=(betav*float(i) - xvel(ns))**2
+				Cysq=(betav*float(j) - yvel(ns))**2
+				Csq=Cxsq+Cysq+Czsq
+				qn(ns)=qn(ns)+phi(ns,i,j,k)*Csq*Cz
+		      enddo
+		    enddo
+		  enddo
+	  endif
 	  qn(ns)=qn(ns)*betacub*dens(ns)/2.0
 	enddo
 	return
@@ -365,9 +415,10 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 
 ccccccccccccccccccccccc shear stress ccccccccccccccccccccccccc
-	subroutine tau11(betav,dens,xvel,press,tau)
+	subroutine tauij(betav,dens,xvel,yvel,zvel,press,ti,tj,tau)
 	real phi(500,-10:10,-10:10,-10:10),dens(500),xvel(500)
-	real press(500),tau(500)
+	real yvel(500),zvel(500),press(500),tau(500)
+	real Ci, Cj
 	common nspace,ivxmin,ivxmax,ivymin,ivymax,ivzmin,ivzmax
 	common /props/ phi
 	betasq=betav*betav
@@ -377,16 +428,40 @@ ccccccccccccccccccccccc shear stress ccccccccccccccccccccccccc
 	  do i=ivxmin,ivxmax
 	    do j=ivymin,ivymax
 	      do k=ivzmin,ivzmax
+	      	if (ti .eq. 1.) then
+	      		Ci = betav*float(i)-xvel(ns)
+	      	else if (ti .eq. 2.) then
+	      		Ci = betav*float(j)-yvel(ns)
+	      	else if (ti .eq. 3.) then
+	      		Ci = betav*float(k)-zvel(ns)
+	      	else
+	      		Ci = -999.
+	      	endif
+	      	if (tj .eq. 1.) then
+	      		Cj = betav*float(i)-xvel(ns)
+	      	else if (tj .eq. 2.) then
+	      		Cj = betav*float(j)-yvel(ns)
+	      	else if (tj .eq. 3.) then
+	      		Cj = betav*float(k)-zvel(ns)
+	      	else
+	      		Cj=-999.
+	      	endif
+
 	        Cxsq=(betav*float(i)-xvel(ns))**2
-			Cysq=betasq*float(j*j)
-			Czsq=betasq*float(k*k)
+			Cysq=(betav*float(j)-yvel(ns))**2
+			Czsq=(betav*float(k)-zvel(ns))**2
 			Csq=Cxsq+Cysq+Czsq
-			tau(ns)=tau(ns)+phi(ns,i,j,k)*Cxsq
+
+			tau(ns)=tau(ns)+phi(ns,i,j,k)*Ci*Cj
 	      enddo
 	    enddo
 	  enddo
-	  tau(ns)= -1.0*tau(ns)*betacub*dens(ns)
-	  tau(ns)=tau(ns) + press(ns)
+	  tau(ns)= -tau(ns)*betacub*dens(ns)
+	  
+	  if (i .eq. j) then
+	  	tau(ns)=tau(ns) + press(ns)
+	  endif
+
 	enddo
 	return
 	end subroutine
