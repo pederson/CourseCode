@@ -1,6 +1,8 @@
 function [] = plot_profile(txtfile)
 
 [x,t0,t05,t10,t15,t20,t25,t30,t35,t40,t45,t50] = import_profile(txtfile);
+obj = dlmread(txtfile,',', 3, 0);
+x = obj(:,1);
 
 figure()
 hold on

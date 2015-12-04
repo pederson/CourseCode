@@ -1,0 +1,4 @@
+200, -6, 6, -6, 6, -6, 6 ! nspace,ivxmin/max,ivymin/max,ivzmin/max
+0.5, 1.0, 0.05 ! alphax, betav, deltat
+1., -1, 1. ! ndf, uf, Tf
+1000, 40, 100 ! number of time steps, location where phi is to be plotted, print interval in time steps
