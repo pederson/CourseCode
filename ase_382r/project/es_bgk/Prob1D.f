@@ -146,6 +146,7 @@ c	      vym(ns,ipindx)=vy(ns)
 	  call Krookcoll_1(nd,ux,vy,wz,T,betav,deltat)
 	  !if(ntime.eq.(ntstep/2)) then
 	  if(float(ntime)*deltat .eq. 40.) then ! plot at time step 40
+		!write(*,*) 'Intermediate dist fn writing!'
 	    ! Write out intermediate distribution function
 	    do i=ivxmin,ivxmax
 	      do j=ivymin,ivymax

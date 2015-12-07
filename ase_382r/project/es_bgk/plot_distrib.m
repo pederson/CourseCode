@@ -2,7 +2,6 @@ function [] = plot_distrib(txtfile)
 
 %[vx,vy,phi] = import_distribfile(txtfile);
 obje = dlmread(txtfile);
-size(obje)
 vx = obje(:,1);
 vy = obje(:,2);
 phi = obje(:,3);
