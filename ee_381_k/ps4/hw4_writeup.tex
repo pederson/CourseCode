@@ -1,0 +1,49 @@
+\documentclass{article}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{tabto}
+\usepackage{amsmath}
+\usepackage[backend=biber]{biblatex}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[english]{babel}
+
+% \addbibresource{oofdtd.bib}
+% \bibliography{oofdtd}
+% \addbibresource{oofdtd.bib}
+%\bibliographystyle{ieeetr}
+
+\begin{document}
+
+
+\title{Problem Set 4 - Computational Problems}
+\author{Dylan Pederson}
+
+\maketitle
+
+\section{Problem 2 - LASSO using PGD and Accelerated PGD}
+
+\subsection{Training}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.5]{error_train.eps}
+\caption{Error in training dataset}
+\end{figure}
+
+\subsection{Testing}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[scale=0.5]{error_test.eps}
+\caption{Error in test dataset}
+\end{figure}
+
+\section{Code}
+
+\lstinputlisting[language=python]{hw4_lasso.py}
+
+
+
+
+\end{document}

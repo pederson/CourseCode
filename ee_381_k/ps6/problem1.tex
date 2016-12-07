@@ -1,0 +1,24 @@
+\documentclass[a4paper]{article}
+\usepackage{fontspec}
+\usepackage{minted}
+\usepackage{fancyvrb}
+
+% \setsansfont{Calibri}
+% \setmonofont{Consolas}
+
+\begin{document}
+\renewcommand{\theFancyVerbLine}{
+  \sffamily\textcolor[rgb]{0.5,0.5,0.5}{\scriptsize\arabic{FancyVerbLine}}}
+
+\section{Problem 1 - GD, SGD, and SVRG}
+
+  \includegraphics[scale=0.5]{p1_training_m=10.eps}
+
+  \includegraphics[scale=0.5]{p1_training_m=50.eps}
+
+  \includegraphics[scale=0.5]{p1_training_m=100.eps}
+
+
+\inputminted{python}{hw6_p1.py}
+
+\end{document}

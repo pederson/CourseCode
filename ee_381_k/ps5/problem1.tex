@@ -1,0 +1,20 @@
+\documentclass[a4paper]{article}
+\usepackage{fontspec}
+\usepackage{minted}
+\usepackage{fancyvrb}
+
+% \setsansfont{Calibri}
+% \setmonofont{Consolas}
+
+\begin{document}
+\renewcommand{\theFancyVerbLine}{
+  \sffamily\textcolor[rgb]{0.5,0.5,0.5}{\scriptsize\arabic{FancyVerbLine}}}
+
+\section{Problem 1 - Conjugate Gradient Algorithm}
+
+  \includegraphics[scale=0.5]{error.eps}
+
+
+\inputminted{python}{hw5_cg.py}
+
+\end{document}
