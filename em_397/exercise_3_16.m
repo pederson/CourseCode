@@ -1,24 +1,60 @@
-clear all
-% Tan Bui-Thanh, April 2012
-% Institute for computational engineering and sciences
-% The University of Texas at Austin
-% tanbui@ices.utexas.edu
+% Exercise 3.16
+% CSE 397 - Bayesian Inverse Problems
+% D. Pederson
+%
 
-% explore the posterior with smooth priors and without hyper-parameters.
+% input parameters
+f = @(t) 10*(t-0.5).*exp(-0.5*1e2*(t-0.5).^2) -0.8 + 1.6*t;   % pick an analytic function
+n = 200;            % number of discrete points
+beta = 0.05;           % std dev of the kernel
+sigma = 0.01;       % std dev of noise
+kappa = 1;          % regularization parameter
+%
 
-rand('state',20);
-randn('state',18);
+% the kernel
+a = @(s,t,b) 1/sqrt(2*pi*b^2)*exp(-1/(2*b^2)*(t-s)^2);
 
-% Mesh
-n = 100; 
-s = linspace(0,1,n+1)'; t = s;
+% construct A matrix
+A = zeros(n+1);
+for i=0:n
+    for j=0:n
+        si = i/n;
+        sj = j/n;
+        
+        A(i+1,j+1) = a(si,sj,beta)/n;
+    end
+end
 
+% construct the noisless observation data
+% from the chosen function
+Yobs = zeros(n+1,1);
+for j=0:n
+    for i=0:n
+        si = i/n;
+        sj = j/n;
+        
+        Yobs(j+1) = Yobs(j+1) + a(sj,si,beta)*f(si)/n; 
+    end
+end
+
+% Add noise
+maxg = max(Yobs);
+Yobs = Yobs + sigma*randn(n+1,1);
+
+% solution by truncation (Morozov)
+xcg = pcg(A, Yobs, sqrt(n+1)*sigma/norm(Yobs), 10000);
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% solution by MAP estimation
 % Prior flag
-PriorFlag = 1; % 1: L_D
+PriorFlag = 2; % 1: L_D
                % 2: L_A
 
 
 % discretize the deblurring kernel
+t = (0:1:n)'/(n);
 beta = 0.05;
 a = 1/sqrt(2*pi*beta^2)*exp(-0.5*(1/beta^2)*t.^2);
 A = 1/n*toeplitz(a);
@@ -27,11 +63,10 @@ A = 1/n*toeplitz(a);
 xtrue = 10*(t-0.5).*exp(-0.5*1e2*(t-0.5).^2) -0.8 + 1.6*t;
 
 %%------------additive noise-----------
-noise = 5;       % Noise level in percentages of the max. of noiseless signal
+noise = 100*sigma;       % Noise level in percentages of the max. of noiseless signal
 y0 = A*xtrue;    % Noiseless signal
 sigma = max(abs(y0))*noise/100;                % STD of the additive noise
-y = y0 + sigma*randn(n+1,1);
-
+y = Yobs;
 
 
 %%------------Prior construction----------
@@ -78,6 +113,7 @@ axes('fontsize',12);
 plot(t,xmean,'r-','LineWidth',2), hold on
 plot(t,xtrue,'k-','LineWidth',1.5)
 fill([t;t(n+1:-1:1)],[xlow;xhigh(n+1:-1:1)],shades(1,:))
-legend('MAP', 'truth','uncertainty','location','best')
+plot(t,xcg,'b')
+legend('MAP', 'truth','uncertainty','Morozov estimate','location','best')
 plot(t,xmean,'r-','LineWidth',2)
 plot(t,xtrue,'k-','LineWidth',1.5)

@@ -32,11 +32,12 @@ y0 = A*xtrue;    % Noiseless signal
 sigma = max(abs(y0))*noise/100;                % STD of the additive noise
 y = y0 + sigma*randn(n+1,1);
 
-
+sigma = sigma*10;
 
 %%------------Prior construction----------
 % standard deviation of the innovation
 gamma = 1/n;
+gamma = gamma*20;
 
 % Construct the L_D matrix
 if PriorFlag == 1,
@@ -78,6 +79,7 @@ axes('fontsize',12);
 plot(t,xmean,'r-','LineWidth',2), hold on
 plot(t,xtrue,'k-','LineWidth',1.5)
 fill([t;t(n+1:-1:1)],[xlow;xhigh(n+1:-1:1)],shades(1,:))
-legend('MAP', 'truth','uncertainty','location','best')
+plot(t, y, 'k--')
+legend('MAP', 'truth','uncertainty','data','location','best')
 plot(t,xmean,'r-','LineWidth',2)
 plot(t,xtrue,'k-','LineWidth',1.5)

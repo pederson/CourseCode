@@ -4,59 +4,44 @@ clear all
 % The University of Texas at Austin
 % tanbui@ices.utexas.edu
 
-% explore the posterior with smooth priors and without hyper-parameters.
+% explore the posterior with non-smooth prior and without hyper-parameters.
 
 rand('state',20);
 randn('state',18);
 
 % Mesh
 n = 100; 
-s = linspace(0,1,n+1)'; t = s;
+s = linspace(0,1,n+1)'; t = s(2:end);
 
-% Prior flag
-PriorFlag = 1; % 1: L_D
-               % 2: L_A
-
-
-% discretize the deblurring kernel
+% discretize the kernel
 beta = 0.05;
 a = 1/sqrt(2*pi*beta^2)*exp(-0.5*(1/beta^2)*t.^2);
 A = 1/n*toeplitz(a);
 
-% Truth 
-xtrue = 10*(t-0.5).*exp(-0.5*1e2*(t-0.5).^2) -0.8 + 1.6*t;
+% Truth
+xtrue = zeros(n,1);
+xtrue(70:end) = 10;
+
 
 %%------------additive noise-----------
 noise = 5;       % Noise level in percentages of the max. of noiseless signal
 y0 = A*xtrue;    % Noiseless signal
 sigma = max(abs(y0))*noise/100;                % STD of the additive noise
-y = y0 + sigma*randn(n+1,1);
-
+y = y0 + sigma*randn(n,1);
 
 
 %%------------Prior construction----------
 % standard deviation of the innovation
-gamma = 1/n;
+gamma = 1e0;
 
-% Construct the L_D matrix
-if PriorFlag == 1,
-  L = diag(ones(n+1,1)) - diag(0.5*ones(n,1),1) - diag(0.5*ones(n,1),-1);
-elseif PriorFlag == 2,
-  L_D = diag(ones(n+1,1)) - diag(0.5*ones(n,1),1) - diag(0.5*ones(n,1),-1);
-  % you should never do this, but we do it anyway for convenience
-  L_Dinv = inv(L_D);
-  Dev = sqrt(gamma^2 * diag(L_Dinv * L_Dinv'));
+L = eye(n) - diag(ones(n-1,1),-1);
+theta = gamma*ones(n,1);
+theta(70) = 10;
+M = diag(1./sqrt(theta));
+L = M * L;
 
-  delta = gamma./ Dev(floor(n/2));
-  L = L_D; 
-  L(1,:) = 0; L(1,1) = delta;
-  L(end,:) = 0; L(end,end) = delta;
-else
-  error('not supported')
-end
-
-% Calculating the MAP estimate and posterior variances, by least squares
-xmean = [(1/sigma)*A;1/gamma*L]\[(1/sigma)*y;zeros(n+1,1)];
+% Calculating the MAP estimate and posterior variances by least squares
+xmean = [(1/sigma)*A;1/gamma*L]\[(1/sigma)*y;zeros(n,1)];
 Gamma_post = inv((1/sigma^2)*A'*A + 1/gamma^2*L'*L); 
 
 % Plotting the MAP estimate and the 2*STD envelope
@@ -72,6 +57,12 @@ Gamma_post = inv((1/sigma^2)*A'*A + 1/gamma^2*L'*L);
 STD = sqrt(diag(Gamma_post));
 xhigh = xmean + 2*STD;
 xlow = xmean - 2*STD;
+
+t = [0;t];
+xlow = [0;xlow];
+xhigh = [0;xhigh];
+xmean = [0;xmean];
+xtrue = [0;xtrue];
 
 figure
 axes('fontsize',12);

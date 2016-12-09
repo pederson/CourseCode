@@ -6,7 +6,7 @@
 % input parameters
 f = @(x) exp(-x);   % pick an analytic function
 n = 200;            % number of discrete points
-beta = 0.1;           % std dev of the kernel
+beta = 0.001;           % std dev of the kernel
 sigma = 0.01;       % std dev of noise
 kappa = 1;          % regularization parameter
 %
