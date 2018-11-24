@@ -1,4 +1,4 @@
-clear all
+ clear all
 % Tan Bui-Thanh, April 2012
 % Institute for computational engineering and sciences
 % The University of Texas at Austin

@@ -24,3 +24,22 @@ dx_hat = Kk*(dz-Hk*dxk_bar) + dxk_bar;
 
 Pxx_hat = Pkbar - Kk*Hk*Pkbar;
 x_hat = xk_star + dx_hat;
+% 
+% dx
+% x
+% Pxx
+% stmk
+% uk
+% Gk
+% vk_bar
+% Qk
+% gammak
+% dxk_bar
+% Pkbar
+% hk
+% Hk
+% Kk
+% dx_hat
+% x_hat
+% Pxx_hat
+% % pause

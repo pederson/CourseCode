@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>hw5_1</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-11-09"><meta name="DC.source" content="hw5_1.m"><style type="text/css">
+      --><title>hw5_1</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-11-11"><meta name="DC.source" content="hw5_1.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,113 +66,544 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">part A</a></li><li><a href="#4">part B</a></li><li><a href="#5">part C</a></li><li><a href="#6">part D</a></li><li><a href="#7">part E</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> [] = hw5_1(A,b, epsilon, xstar)
-</pre><pre class="codeinput">[m,n] = size(A);
-</pre><pre class="codeoutput error">Error using hw5_1 (line 3)
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">part A</a></li><li><a href="#4">part B</a></li><li><a href="#5">part C</a></li><li><a href="#6">part D</a></li><li><a href="#7">part E</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> [] = hw5_1(A,b, epsilon, xstar, problemstring)
+</pre><pre class="codeinput"><span class="keyword">if</span> nargin&lt;5, problemstring = <span class="string">''</span>; <span class="keyword">end</span>;
+
+[m,n] = size(A);
+rank = min([m,n]);
+</pre><pre class="codeoutput error">Error using hw5_1 (line 4)
 Not enough input arguments.
-</pre><h2>part A<a name="3"></a></h2><p>compute the reduced SVD and plot singular values</p><pre class="codeinput">[U, S, V] = svd(A, 0);
+</pre><h2>part A<a name="3"></a></h2><pre class="codeinput">disp(<span class="string">'Part A'</span>)
+<span class="comment">% compute the reduced SVD and plot singular values</span>
+[U, S, V] = svd(A, 0);
 sing_vals = diag(S);
-semilogy(sing_vals);
-title(<span class="string">'Singular values of A'</span>)
+<span class="comment">% figure()</span>
+semilogy(sing_vals, <span class="string">'b'</span>);
+hold <span class="string">on</span>
+semilogy([1, length(sing_vals)], [epsilon, epsilon], <span class="string">'k--'</span>)
+title([<span class="string">'Singular values A: '</span>, problemstring])
 xlabel(<span class="string">'n'</span>)
 ylabel(<span class="string">'singular value'</span>)
-</pre><h2>part B<a name="4"></a></h2><p>explain whether A is rank deficient (or nearly)</p><h2>part C<a name="5"></a></h2><p>test svd, qr w/ pivot, qr w/o pivot, and rangeA.m function to find the best rank-r approximation to Range(A)</p><pre class="codeinput"><span class="keyword">for</span> r = n*[1/16, 1/8, 1/4, 1/2]
+legend(<span class="string">'Singular values'</span>,<span class="string">'epsilon'</span>)
+savefig([<span class="string">'p1_a_singvals_'</span>,problemstring,<span class="string">'.fig'</span>])
+</pre><h2>part B<a name="4"></a></h2><pre class="codeinput">disp(<span class="string">'Part B'</span>)
+<span class="comment">% explain whether A is rank deficient (or nearly)</span>
+<span class="comment">% if any singular values of A are smaller than epsilon</span>
+<span class="comment">% then the matrix is rank deficient</span>
+<span class="keyword">if</span> (nnz(sing_vals &lt; epsilon) &gt; 0)
+    disp(<span class="string">'Matrix is rank-deficient'</span>)
+<span class="keyword">else</span>
+    disp(<span class="string">'Matrix is NOT rank-deficient'</span>)
+<span class="keyword">end</span>
+</pre><h2>part C<a name="5"></a></h2><pre class="codeinput">disp(<span class="string">'Part C'</span>)
+<span class="comment">% test svd, qr w/ pivot, qr w/o pivot, and rangeA.m function</span>
+<span class="comment">% to find the best rank-r approximation to Range(A)</span>
+
+<span class="comment">% QR w/ pivot</span>
+[Qpiv, ~] = qr(A, 0);
+
+<span class="comment">% QR w/o pivot</span>
+[Q,~] = qr(A);
+
+<span class="comment">% rangeA</span>
+<span class="comment">%QrangeA =rangeA(  @(x)A*x,  @(x)A'*x,  m, n, n);</span>
+svderr = zeros(4,1);
+qrpiverr = zeros(4,1);
+qrerr = zeros(4,1);
+rangeAerr = zeros(4,1);
+rs = n*[1/16, 1/8, 1/4, 1/2];
+<span class="keyword">for</span> i=1:length(rs)
+    r = rs(i);
+    disp([<span class="string">'r: '</span>,num2str(r)])
+
     <span class="comment">% svd</span>
+    Ur = U(:,1:r);
+    <span class="comment">%Sr = S(1:r, 1:r);</span>
+    <span class="comment">%Vr = V(:,1:r);</span>
+
+    <span class="comment">% qr w/ pivot</span>
+    Qpivr = Qpiv(:,1:r);
+    <span class="comment">%Rpivr = Rpiv(1:r, :);</span>
+
+    <span class="comment">% qr w/o pivot</span>
+    Qr = Q(:,1:r);
+    <span class="comment">%Rr = R(:,1:r);</span>
+
+    <span class="comment">% rangeA.m</span>
+    QrangeA =rangeA(  @(x)A*x,  @(x)A'*x,  m, n, r);
+
+    <span class="comment">% error analysis</span>
+    svderr(i) = norm(A - Ur*Ur'*A);
+    qrpiverr(i) = norm(A - Qpivr*Qpivr'*A);
+    qrerr(i) = norm(A - Qr*Qr'*A);
+    rangeAerr(i) = norm(A - QrangeA*QrangeA'*A);
+
+<span class="keyword">end</span>
+
+r = n*[1/16, 1/8, 1/4, 1/2]';
+figure()
+semilogy(r, svderr, <span class="string">'ko-'</span>)
+hold <span class="string">on</span>
+semilogy(r, qrpiverr, <span class="string">'b+-'</span>)
+semilogy(r, qrerr, <span class="string">'gd-'</span>)
+semilogy(r, rangeAerr, <span class="string">'r.-'</span>)
+legend(<span class="string">'SVD'</span>,<span class="string">'QR w/pivot'</span>,<span class="string">'QR w/o pivot'</span>,<span class="string">'rangeA'</span>)
+title([<span class="string">'Low-rank approximations: '</span>,problemstring])
+savefig([<span class="string">'p1_c_methods_'</span>,problemstring,<span class="string">'.fig'</span>])
+</pre><h2>part D<a name="6"></a></h2><pre class="codeinput">disp(<span class="string">'Part D'</span>)
+<span class="comment">% use truncated SVD to solve least squares</span>
+relcond_A = zeros(rank,1);
+relcond_b = zeros(rank,1);
+normx = zeros(rank,1);
+resid = zeros(rank,1);
+error = zeros(rank,1);
+<span class="keyword">for</span> r=1:rank
     Ur = U(:,1:r);
     Sr = S(1:r, 1:r);
     Vr = V(:,1:r);
 
-    <span class="comment">% qr w/ pivot</span>
+    <span class="comment">% solve the least squares problem</span>
+    xr = Vr*((Ur'*b)./diag(Sr));
 
-    <span class="comment">% qr w/o pivot</span>
+    <span class="comment">% condition number parameters</span>
+    kappa = Sr(1,1)/Sr(end,end);
+    theta = acos(norm(Ur*Ur'*b)/norm(b));
+    eta = Sr(1,1)*norm(xr)/norm(A*xr);
 
-    <span class="comment">% rangeA.m</span>
+    <span class="comment">% relative cond # A</span>
+    relcond_A(r) = kappa/(eta*cos(theta));
 
-    <span class="comment">% error analysis</span>
-    norm(eye(r) - Ur*Ur')   <span class="comment">% SVD</span>
-    norm(eye(r) - Q*Q')     <span class="comment">% qr pivoting</span>
+    <span class="comment">% relative cond # b</span>
+    relcond_b(r) = kappa + kappa^2*tan(theta)/eta;
+
+    <span class="comment">% norm x</span>
+    normx(r) = norm(xr)/norm(xstar);
+
+    <span class="comment">% residual</span>
+    resid(r) = norm(b-A*xr)/norm(b);
+
+    <span class="comment">% error</span>
+    error(r) = norm(xr - xstar)/norm(xstar);
+
 <span class="keyword">end</span>
-</pre><h2>part D<a name="6"></a></h2><p>use truncated SVD to solve least squares</p><pre class="codeinput"><span class="comment">% (i)</span>
+
+r=1:rank;
+<span class="comment">% (i)</span>
 <span class="comment">% plot relative cond, pertub A</span>
+figure()
+semilogy(r, relcond_A, <span class="string">'k.'</span>)
+title([<span class="string">'Rel. Cond. # (pertub A) (Truncated): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'relative cond. number B'</span>)
+savefig([<span class="string">'p1_d_relcond_A_'</span>,problemstring,<span class="string">'.fig'</span>])
 
 <span class="comment">% (ii)</span>
 <span class="comment">% plot relative cond, pertub b</span>
+figure()
+semilogy(r, relcond_b, <span class="string">'k+'</span>)
+title([<span class="string">'Rel. Cond. # (pertub b) (Truncated): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'relative cond. number b'</span>)
+savefig([<span class="string">'p1_d_relcond_b_singvals_'</span>,problemstring,<span class="string">'.fig'</span>])
 
 <span class="comment">% (iii)</span>
-<span class="comment">% plot the norm |xr|/|xstart| as fn(r)</span>
+<span class="comment">% plot the norm |xr|/|xstar| as fn(r)</span>
+figure()
+semilogy(r, normx, <span class="string">'k*'</span>)
+title([<span class="string">'Norm of x_r (Truncated): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'||x_r||/||x_{*}||'</span>)
+savefig([<span class="string">'p1_d_xr_'</span>,problemstring,<span class="string">'.fig'</span>])
 
 <span class="comment">% (iv)</span>
 <span class="comment">% plot residual as fn(r)</span>
+figure()
+semilogy(r, resid, <span class="string">'ko'</span>)
+title([<span class="string">'Residual (Truncated): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'||b-Ax_r||/||b||'</span>)
+savefig([<span class="string">'p1_d_resid_'</span>,problemstring,<span class="string">'.fig'</span>])
 
 <span class="comment">% (v)</span>
 <span class="comment">% plot the error as fn(r)</span>
+figure()
+semilogy(r, error, <span class="string">'kx'</span>)
+title([<span class="string">'Error in x_r (Truncated): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'||x_r-x_{star}||/||x_{star}||'</span>)
+savefig([<span class="string">'p1_a_singvals_'</span>,problemstring,<span class="string">'.fig'</span>])
 
 <span class="comment">% (vi)</span>
 <span class="comment">% plot the residual v error for each r using loglog</span>
-</pre><h2>part E<a name="7"></a></h2><p>repeat part D but with regularized svd (beta = sigma_r)</p><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
-##### SOURCE BEGIN #####
-function [] = hw5_1(A,b, epsilon, xstar)
-
-[m,n] = size(A);
-
-%% part A
-% compute the reduced SVD and plot singular values
-[U, S, V] = svd(A, 0);
-sing_vals = diag(S);
-semilogy(sing_vals);
-title('Singular values of A')
-xlabel('n')
-ylabel('singular value')
-
-%% part B
-% explain whether A is rank deficient (or nearly)
-
-
-%% part C
-% test svd, qr w/ pivot, qr w/o pivot, and rangeA.m function
-% to find the best rank-r approximation to Range(A)
-
-for r = n*[1/16, 1/8, 1/4, 1/2]
-    % svd
+figure()
+loglog(error, resid, <span class="string">'kd'</span>)
+title([<span class="string">'residual v. error (Truncated): '</span>,problemstring])
+xlabel(<span class="string">'||x_r-x_{star}||/||x_{star}||'</span>)
+ylabel(<span class="string">'||b-Ax_r||/||b||'</span>)
+</pre><h2>part E<a name="7"></a></h2><pre class="codeinput">disp(<span class="string">'Part E'</span>)
+<span class="comment">% repeat part D but with regularized svd (beta = sigma_r)</span>
+relcond_A = zeros(rank,1);
+relcond_b = zeros(rank,1);
+normx = zeros(rank,1);
+resid = zeros(rank,1);
+error = zeros(rank,1);
+<span class="keyword">for</span> r=1:rank
     Ur = U(:,1:r);
     Sr = S(1:r, 1:r);
     Vr = V(:,1:r);
 
-    % qr w/ pivot
+    <span class="comment">% regularization parameter</span>
+    beta = Sr(end,end);
 
-    % qr w/o pivot
+    <span class="comment">% solve the least squares problem</span>
+    extra = beta*eye(r) + Sr*Sr;
+    extrainv = diag(1./diag(extra));
+    xr = Vr*extrainv*Sr*Ur'*b;
 
-    % rangeA.m
+    <span class="comment">% condition number parameters</span>
+    kappa = Sr(1,1)/Sr(end,end);
+    theta = acos(norm(Ur*Ur'*b)/norm(b));
+    eta = Sr(1,1)*norm(xr)/norm(A*xr);
+
+    <span class="comment">% relative cond # A</span>
+    relcond_A(r) = kappa/(eta*cos(theta));
+
+    <span class="comment">% relative cond # b</span>
+    relcond_b(r) = kappa + kappa^2*tan(theta)/eta;
+
+    <span class="comment">% norm x</span>
+    normx(r) = norm(xr)/norm(xstar);
+
+    <span class="comment">% residual</span>
+    resid(r) = norm(b-A*xr)/norm(b);
+
+    <span class="comment">% error</span>
+    error(r) = norm(xr - xstar)/norm(xstar);
+
+<span class="keyword">end</span>
+
+r=1:rank;
+<span class="comment">% (i)</span>
+<span class="comment">% plot relative cond, pertub A</span>
+figure()
+semilogy(r, relcond_A, <span class="string">'k.'</span>)
+title([<span class="string">'Rel. Cond. # (pertub A) (Regularized): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'relative cond. number B'</span>)
+
+<span class="comment">% (ii)</span>
+<span class="comment">% plot relative cond, pertub b</span>
+figure()
+semilogy(r, relcond_b, <span class="string">'k+'</span>)
+title([<span class="string">'Rel. Cond. # (pertub b) (Regularized): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'relative cond. number b'</span>)
+
+<span class="comment">% (iii)</span>
+<span class="comment">% plot the norm |xr|/|xstar| as fn(r)</span>
+figure()
+semilogy(r, normx, <span class="string">'k*'</span>)
+title([<span class="string">'Norm of x_r (Regularized): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'||x_r||/||x_{*}||'</span>)
+
+<span class="comment">% (iv)</span>
+<span class="comment">% plot residual as fn(r)</span>
+figure()
+semilogy(r, resid, <span class="string">'ko'</span>)
+title([<span class="string">'Residual (Regularized): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'||b-Ax_r||/||b||'</span>)
+
+<span class="comment">% (v)</span>
+<span class="comment">% plot the error as fn(r)</span>
+figure()
+semilogy(r, error, <span class="string">'kx'</span>)
+title([<span class="string">'Error in x_r (Regularized): '</span>,problemstring])
+xlabel(<span class="string">'Rank r'</span>)
+ylabel(<span class="string">'||x_r-x_{star}||/||x_{star}||'</span>)
+
+<span class="comment">% (vi)</span>
+<span class="comment">% plot the residual v error for each r using loglog</span>
+figure()
+loglog(error, resid, <span class="string">'kd'</span>)
+title([<span class="string">'residual v. error (Regularized): '</span>,problemstring])
+xlabel(<span class="string">'||x_r-x_{star}||/||x_{star}||'</span>)
+ylabel(<span class="string">'||b-Ax_r||/||b||'</span>)
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [] = hw5_1(A,b, epsilon, xstar, problemstring)
+if nargin<5, problemstring = ''; end;
     
-    % error analysis
-    norm(eye(r) - Ur*Ur')   % SVD
-    norm(eye(r) - Q*Q')     % qr pivoting
+[m,n] = size(A);
+rank = min([m,n]);
+
+%% part A
+disp('Part A')
+% compute the reduced SVD and plot singular values
+[U, S, V] = svd(A, 0);
+sing_vals = diag(S);
+% figure()
+semilogy(sing_vals, 'b');
+hold on
+semilogy([1, length(sing_vals)], [epsilon, epsilon], 'kREPLACE_WITH_DASH_DASH')
+title(['Singular values A: ', problemstring])
+xlabel('n')
+ylabel('singular value')
+legend('Singular values','epsilon')
+savefig(['p1_a_singvals_',problemstring,'.fig'])
+
+%% part B
+disp('Part B')
+% explain whether A is rank deficient (or nearly)
+% if any singular values of A are smaller than epsilon
+% then the matrix is rank deficient
+if (nnz(sing_vals < epsilon) > 0)
+    disp('Matrix is rank-deficient')
+else
+    disp('Matrix is NOT rank-deficient')
 end
 
-%% part D
-% use truncated SVD to solve least squares
+%% part C
+disp('Part C')
+% test svd, qr w/ pivot, qr w/o pivot, and rangeA.m function
+% to find the best rank-r approximation to Range(A)
 
+% QR w/ pivot
+[Qpiv, ~] = qr(A, 0);
+
+% QR w/o pivot
+[Q,~] = qr(A);
+
+% rangeA
+%QrangeA =rangeA(  @(x)A*x,  @(x)A'*x,  m, n, n);
+svderr = zeros(4,1);
+qrpiverr = zeros(4,1);
+qrerr = zeros(4,1);
+rangeAerr = zeros(4,1);
+rs = n*[1/16, 1/8, 1/4, 1/2];
+for i=1:length(rs)
+    r = rs(i);
+    disp(['r: ',num2str(r)])
+    
+    % svd
+    Ur = U(:,1:r);
+    %Sr = S(1:r, 1:r);
+    %Vr = V(:,1:r);
+
+    % qr w/ pivot
+    Qpivr = Qpiv(:,1:r);
+    %Rpivr = Rpiv(1:r, :);
+
+    % qr w/o pivot
+    Qr = Q(:,1:r);
+    %Rr = R(:,1:r);
+
+    % rangeA.m
+    QrangeA =rangeA(  @(x)A*x,  @(x)A'*x,  m, n, r);
+    
+    % error analysis
+    svderr(i) = norm(A - Ur*Ur'*A);
+    qrpiverr(i) = norm(A - Qpivr*Qpivr'*A);
+    qrerr(i) = norm(A - Qr*Qr'*A);
+    rangeAerr(i) = norm(A - QrangeA*QrangeA'*A);
+    
+end
+
+r = n*[1/16, 1/8, 1/4, 1/2]';
+figure()
+semilogy(r, svderr, 'ko-')
+hold on
+semilogy(r, qrpiverr, 'b+-')
+semilogy(r, qrerr, 'gd-')
+semilogy(r, rangeAerr, 'r.-')
+legend('SVD','QR w/pivot','QR w/o pivot','rangeA')
+title(['Low-rank approximations: ',problemstring])
+savefig(['p1_c_methods_',problemstring,'.fig'])
+
+%% part D
+disp('Part D')
+% use truncated SVD to solve least squares
+relcond_A = zeros(rank,1);
+relcond_b = zeros(rank,1);
+normx = zeros(rank,1);
+resid = zeros(rank,1);
+error = zeros(rank,1);
+for r=1:rank
+    Ur = U(:,1:r);
+    Sr = S(1:r, 1:r);
+    Vr = V(:,1:r);
+    
+    % solve the least squares problem
+    xr = Vr*((Ur'*b)./diag(Sr));
+    
+    % condition number parameters
+    kappa = Sr(1,1)/Sr(end,end);
+    theta = acos(norm(Ur*Ur'*b)/norm(b));
+    eta = Sr(1,1)*norm(xr)/norm(A*xr);
+    
+    % relative cond # A
+    relcond_A(r) = kappa/(eta*cos(theta));
+    
+    % relative cond # b
+    relcond_b(r) = kappa + kappa^2*tan(theta)/eta;
+    
+    % norm x
+    normx(r) = norm(xr)/norm(xstar);
+    
+    % residual
+    resid(r) = norm(b-A*xr)/norm(b);
+    
+    % error
+    error(r) = norm(xr - xstar)/norm(xstar);
+    
+end
+
+r=1:rank;
 % (i)
 % plot relative cond, pertub A
+figure()
+semilogy(r, relcond_A, 'k.')
+title(['Rel. Cond. # (pertub A) (Truncated): ',problemstring])
+xlabel('Rank r')
+ylabel('relative cond. number B')
+savefig(['p1_d_relcond_A_',problemstring,'.fig'])
 
 % (ii)
 % plot relative cond, pertub b
+figure()
+semilogy(r, relcond_b, 'k+')
+title(['Rel. Cond. # (pertub b) (Truncated): ',problemstring])
+xlabel('Rank r')
+ylabel('relative cond. number b')
+savefig(['p1_d_relcond_b_singvals_',problemstring,'.fig'])
 
 % (iii)
-% plot the norm |xr|/|xstart| as fn(r)
+% plot the norm |xr|/|xstar| as fn(r)
+figure()
+semilogy(r, normx, 'k*')
+title(['Norm of x_r (Truncated): ',problemstring])
+xlabel('Rank r')
+ylabel('||x_r||/||x_{*}||')
+savefig(['p1_d_xr_',problemstring,'.fig'])
 
 % (iv)
 % plot residual as fn(r)
+figure()
+semilogy(r, resid, 'ko')
+title(['Residual (Truncated): ',problemstring])
+xlabel('Rank r')
+ylabel('||b-Ax_r||/||b||')
+savefig(['p1_d_resid_',problemstring,'.fig'])
 
 % (v)
 % plot the error as fn(r)
+figure()
+semilogy(r, error, 'kx')
+title(['Error in x_r (Truncated): ',problemstring])
+xlabel('Rank r')
+ylabel('||x_r-x_{star}||/||x_{star}||')
+savefig(['p1_a_singvals_',problemstring,'.fig'])
 
 % (vi)
 % plot the residual v error for each r using loglog
-
+figure()
+loglog(error, resid, 'kd')
+title(['residual v. error (Truncated): ',problemstring])
+xlabel('||x_r-x_{star}||/||x_{star}||')
+ylabel('||b-Ax_r||/||b||')
 
 %% part E
+disp('Part E')
 % repeat part D but with regularized svd (beta = sigma_r)
+relcond_A = zeros(rank,1);
+relcond_b = zeros(rank,1);
+normx = zeros(rank,1);
+resid = zeros(rank,1);
+error = zeros(rank,1);
+for r=1:rank
+    Ur = U(:,1:r);
+    Sr = S(1:r, 1:r);
+    Vr = V(:,1:r);
+    
+    % regularization parameter
+    beta = Sr(end,end);
+    
+    % solve the least squares problem
+    extra = beta*eye(r) + Sr*Sr;
+    extrainv = diag(1./diag(extra));
+    xr = Vr*extrainv*Sr*Ur'*b;
+    
+    % condition number parameters
+    kappa = Sr(1,1)/Sr(end,end);
+    theta = acos(norm(Ur*Ur'*b)/norm(b));
+    eta = Sr(1,1)*norm(xr)/norm(A*xr);
+    
+    % relative cond # A
+    relcond_A(r) = kappa/(eta*cos(theta));
+    
+    % relative cond # b
+    relcond_b(r) = kappa + kappa^2*tan(theta)/eta;
+    
+    % norm x
+    normx(r) = norm(xr)/norm(xstar);
+    
+    % residual
+    resid(r) = norm(b-A*xr)/norm(b);
+    
+    % error
+    error(r) = norm(xr - xstar)/norm(xstar);
+    
+end
+
+r=1:rank;
+% (i)
+% plot relative cond, pertub A
+figure()
+semilogy(r, relcond_A, 'k.')
+title(['Rel. Cond. # (pertub A) (Regularized): ',problemstring])
+xlabel('Rank r')
+ylabel('relative cond. number B')
+
+% (ii)
+% plot relative cond, pertub b
+figure()
+semilogy(r, relcond_b, 'k+')
+title(['Rel. Cond. # (pertub b) (Regularized): ',problemstring])
+xlabel('Rank r')
+ylabel('relative cond. number b')
+
+% (iii)
+% plot the norm |xr|/|xstar| as fn(r)
+figure()
+semilogy(r, normx, 'k*')
+title(['Norm of x_r (Regularized): ',problemstring])
+xlabel('Rank r')
+ylabel('||x_r||/||x_{*}||')
+
+% (iv)
+% plot residual as fn(r)
+figure()
+semilogy(r, resid, 'ko')
+title(['Residual (Regularized): ',problemstring])
+xlabel('Rank r')
+ylabel('||b-Ax_r||/||b||')
+
+% (v)
+% plot the error as fn(r)
+figure()
+semilogy(r, error, 'kx')
+title(['Error in x_r (Regularized): ',problemstring])
+xlabel('Rank r')
+ylabel('||x_r-x_{star}||/||x_{star}||')
+
+% (vi)
+% plot the residual v error for each r using loglog
+figure()
+loglog(error, resid, 'kd')
+title(['residual v. error (Regularized): ',problemstring])
+xlabel('||x_r-x_{star}||/||x_{star}||')
+ylabel('||b-Ax_r||/||b||')
 
 
 ##### SOURCE END #####
